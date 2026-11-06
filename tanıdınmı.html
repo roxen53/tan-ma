@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atakan'ı Ne Kadar Tanıyorsun?</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 550px;
+            width: 100%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        h1, h2 {
+            margin-bottom: 15px;
+            color: #38bdf8;
+        }
+
+        p.sub-title {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            border-color: #38bdf8;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #0284c7;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #0369a1;
+        }
+
+        .quiz-card {
+            display: none;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .option-btn {
+            background: #334155;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover {
+            background: #475569;
+        }
+
+        .progress {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 10px;
+        }
+
+        .score-box {
+            font-size: 1.5rem;
+            margin: 20px 0;
+            color: #4ade80;
+            font-weight: bold;
+        }
+
+        .user-text-output {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: left;
+            font-style: italic;
+            color: #cbd5e1;
+            border-left: 4px solid #38bdf8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- 1. Aşama: Kullanıcı Adı Girişi -->
+        <div id="welcome-screen">
+            <h1>Hoş Geldiniz</h1>
+            <p class="sub-title">Testi çözmeye başlamak için lütfen adınızı giriniz.</p>
+            <div class="input-group">
+                <input type="text" id="username" placeholder="Kullanıcı Adınız" autocomplete="off">
+            </div>
+            <button onclick="startQuiz()">Teste Başla</button>
+        </div>
+
+        <!-- 2. Aşama: Sorular -->
+        <div id="quiz-screen" class="quiz-card">
+            <p id="author-note" style="color: #f59e0b; font-size: 0.9rem; margin-bottom: 10px; font-weight: 600;">
+                Bu sorular doğrudan Atakandan gelmektedir
+            </p>
+            <div class="progress" id="progress-text">Soru 1 / 11</div>
+            <h2 id="question-title">Soru Metni</h2>
+            
+            <div id="options-container" class="options-grid"></div>
+
+            <div id="text-input-container" style="display: none;">
+                <textarea id="open-answer" placeholder="Düşüncelerini buraya yaz..."></textarea>
+                <button onclick="nextQuestion(true)" style="margin-top: 10px;">Cevabı Gönder ve Bitir</button>
+            </div>
+        </div>
+
+        <!-- 3. Aşama: Sonuç -->
+        <div id="result-screen" class="quiz-card">
+            <h1>Tebrikler! <span id="final-username"></span></h1>
+            <p class="sub-title">Testi başarıyla tamamladın.</p>
+            
+            <div class="score-box" id="score-display">Skorun: 0 / 11</div>
+
+            <div id="user-description-result" class="user-text-output" style="display: none;">
+                <strong>Atakan hakkındaki düşüncen:</strong>
+                <p id="user-description-text"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                q: "En sevdiğim yemek nedir?",
+                options: ["Kebab", "Pizzam", "Mantı", "Burger"],
+                correct: "Kebab"
+            },
+            {
+                q: "Şu an hayatta sahip olmak istediğim en büyük hedefim veya hayalim nedir?",
+                options: ["Dünyayı gezmek", "Milyarder olmak", "Ünlü bir sporcu olmak", "Kendi şirketimi kurmak"],
+                correct: "Milyarder olmak"
+            },
+            {
+                q: "Çok sinirlendiğimde veya stresli olduğumda genelde nasıl tepki veririm?",
+                options: ["Bağırıp çağırırım", "İnsanlardan uzaklaşırım", "Spor yaparım", "Müzik dinlerim"],
+                correct: "İnsanlardan uzaklaşırım"
+            },
+            {
+                q: "Boş bir hafta sonum olduğunda bunu evde mi geçirmeyi tercih ederim, dışarıda mı?",
+                options: ["Evde", "Dışarıda"],
+                correct: "Dışarıda"
+            },
+            {
+                q: "En sevdiğim şarkı?",
+                options: ["13Killoki Marlboro daouble fusion", "Deha INC - Karma", "Ezhel - Geceler", "Uzi - Paparazzi"],
+                correct: "13Killoki Marlboro daouble fusion"
+            },
+            {
+                q: "Hayatta en tahammül edemediğim, beni en çok çileden çıkaran insan davranışı nedir?",
+                options: ["Yalan söylenmesi", "Geç kalınması", "Önemsenmemek ve iyiliği suistimal etmek", "Bencil olunması"],
+                correct: "Önemsenmemek ve iyiliği suistimal etmek"
+            },
+            {
+                q: "Favori müzisyenim kimdir?",
+                options: ["Deha.INC", "Çakal", "Batuflex", "Lvbel C5"],
+                correct: "Deha.INC"
+            },
+            {
+                q: "Şu aralar en çok kafaya taktığım veya üzerinde çalıştığım şey nedir?",
+                options: ["Araba almak", "İstanbula gitmek", "Yeni dil öğrenmek", "Yazılım geliştirmek"],
+                correct: "İstanbula gitmek"
+            },
+            {
+                q: "İnsanlara güvenmekte neden zorlanırım?",
+                options: ["Yapı olarak şüpheciyim", "Daha önce yapılan kahpeliklerden dolayı", "Kimseyi tanımak istemiyorum", "Zamanca kaygılarım var"],
+                correct: "Daha önce yapılan kahpeliklerden dolayı"
+            },
+            {
+                q: "Hayatımda en değer verdiğim insan kimdir?",
+                options: ["Elzem", "Kendim", "Ailem", "Arkadaş grubum"],
+                correct: "Elzem"
+            },
+            {
+                q: "Gelecekte 10 yıl sonra kendini nerede ve nasıl yaşarken hayal ediyorum?",
+                options: ["Milyoner ve Miamide", "İstanbulda mütevazı bir yaşam", "Avrupa turunda", "İzmirde sahil kasabasında"],
+                correct: "Milyoner ve Miamide"
+            },
+            {
+                q: "Beni bir kaç cümleyle anlatacak olsaydın bu ne olurdu?",
+                isOpenEnded: true
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userName = "";
+
+        function startQuiz() {
+            const input = document.getElementById("username");
+            if (input.value.trim() === "") {
+                alert("Lütfen geçerli bir kullanıcı adı giriniz.");
+                return;
+            }
+            userName = input.value.trim();
+            document.getElementById("welcome-screen").style.display = "none";
+            document.getElementById("quiz-screen").style.display = "block";
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const currentQ = questions[currentQuestionIndex];
+            document.getElementById("progress-text").innerText = `Soru ${currentQuestionIndex + 1} / ${questions.length}`;
+            document.getElementById("question-title").innerText = currentQ.q;
+
+            const optionsContainer = document.getElementById("options-container");
+            const textContainer = document.getElementById("text-input-container");
+            optionsContainer.innerHTML = "";
+
+            if (currentQ.isOpenEnded) {
+                optionsContainer.style.display = "none";
+                textContainer.style.display = "block";
+            } else {
+                optionsContainer.style.display = "grid";
+                textContainer.style.display = "none";
+                
+                currentQ.options.forEach(opt => {
+                    const btn = document.createElement("button");
+                    btn.className = "option-btn";
+                    btn.innerText = opt;
+                    btn.onclick = () => checkAnswer(opt);
+                    optionsContainer.appendChild(btn);
+                });
+            }
+        }
+
+        function checkAnswer(selectedOption) {
+            const currentQ = questions[currentQuestionIndex];
+            if (selectedOption === currentQ.correct) {
+                score++;
+            }
+            nextQuestion();
+        }
+
+        function nextQuestion(isOpenEndedSubmitted = false) {
+            if (isOpenEndedSubmitted) {
+                const userText = document.getElementById("open-answer").value.trim();
+                if (userText) {
+                    document.getElementById("user-description-text").innerText = userText;
+                    document.getElementById("user-description-result").style.display = "block";
+                }
+                // Son açık uçlu soru da cevaplandığı için puan verilebilir (isteğe bağlı skor artırma)
+                score++; 
+            }
+
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById("quiz-screen").style.display = "none";
+            document.getElementById("result-screen").style.display = "block";
+            document.getElementById("final-username").innerText = userName;
+            document.getElementById("score-display").innerText = `Skorun: ${score} / 11`;
+        }
+    </script>
+</body>
+</html>
